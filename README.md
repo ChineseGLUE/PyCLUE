@@ -55,7 +55,7 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
        原始的XNLI覆盖15种语言（含低资源语言）。我们选取其中的中文，并将做格式转换，使得非常容易进入训练和测试阶段。
    ```
 
-3. ##### TNEWS 今日头条中文新闻（短文本）分类 Short Text Classificaiton for News
+3. **TNEWS 今日头条中文新闻（短文本）分类 Short Text Classificaiton for News**
 
    ```
    数据量：训练集(266,000)，验证集(57,000)，测试集(57,000)
@@ -73,7 +73,7 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
        每行为一条数据，以_!_分割的个字段，从前往后分别是情感类别，数据id，新闻标题，新闻内容
    ```
 
-5. ##### BQ 智能客服问句匹配 Question Matching for Customer Service
+5. **BQ 智能客服问句匹配 Question Matching for Customer Service**
 
    该数据集是自动问答系统语料，共有120,000对句子对，并标注了句子对相似度值，取值为0或1（0表示不相似，1表示相似）。数据中存在错别字、语法不规范等问题，但更加贴近工业场景。
 
@@ -84,7 +84,7 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
         2.为什么我的还没有额度 [分隔符] 为啥没有额度！！ [分隔符] 1
    ```
 
-6. ##### THUCNEWS 长文本分类 Long Text classification
+6. **THUCNEWS 长文本分类 Long Text classification**
 
    该数据集共有4万多条中文新闻长文本标注数据，共14个类别: "体育":0, "娱乐":1, "家居":2, "彩票":3, "房产":4, "教育":5, "时尚":6, "时政":7, "星座":8, "游戏":9, "社会":10, "科技":11, "股票":12, "财经":13。
 
@@ -95,7 +95,7 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
     每行为一条数据，以_!_分割的个字段，从前往后分别是 类别ID，类别名称，文本ID，文本内容。
    ```
 
-7. ##### iFLYTEK 长文本分类 Long Text classification
+7. **iFLYTEK 长文本分类 Long Text classification**
 
    该数据集共有1.7万多条关于app应用描述的长文本标注数据，包含和日常生活相关的各类应用主题，共119个类别："打车":0,"地图导航":1,"免费WIFI":2,"租车":3,….,"女性":115,"经营":116,"收款":117,"其他":118(分别用0-118表示)。
 
@@ -224,6 +224,7 @@ configs["labels"] = ["0", "1"]
 configs["label_position"] = 0
 configs["text_a_position"] = 1
 configs["text_b_position"] = 2
+# 分隔符
 configs["delimiter"] = "_!_"
 # 是否丢弃首行 ignore_header:
 #     是否丢弃每个文件的首行，影响文件：train, dev, test
@@ -262,7 +263,9 @@ configs["tpu_name"] = "grpc://10.1.101.2:8470"
 configs["num_tpu_cores"] = 8
 ```
 
-关于自定义数据集的`configs`参数，在`PyClue/PyClue/utils/classifier_utils/core.py`的`default_configs`的基础上新增数据项参数，用例如下：
+关于自定义数据集的`configs`参数，在`PyClue/PyClue/utils/classifier_utils/core.py`的`default_configs`的基础上新增数据项参数，用例参照上文。
+
+
 
 ### 阅读理解任务
 
