@@ -1,0 +1,147 @@
+# -*- coding: utf-8 -*-
+# @Author: Liu Shaoweihua
+# @Date:   2019-11-20
+
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import os
+import sys
+sys.path.append("..")
+
+import tokenization
+from utils.classifier_utils import run_classifier, Configs, ClassificationProcessor
+from utils.classifier_utils import default_configs as configs
+from utils.file_utils import wget, unzip, rm, mkdir, rmdir
+
+
+DATA_DIR = "../datasets"
+DATA_URLS = {
+    "bq": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/bq.zip",
+    "xnli": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/xnli.zip",
+    "lcqmc": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/lcqmc.zip",
+    "inews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/inews.zip",
+    "iflytek": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/iflytek.zip",
+    "thucnews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/thucnews.zip",
+    "tnews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/tnews.zip"
+}
+DATA_PROCESSORS = {
+    "bq": ClassificationProcessor(
+        labels = ["0", "1"],
+        label_position = 2,
+        text_a_position = 0,
+        text_b_position = 1,
+        file_type = "txt",
+        delimiter = "_!_"
+    ),
+    "xnli": ClassificationProcessor(
+        labels = ["0", "1", "2"],
+        label_position = 2,
+        text_a_position = 0,
+        text_b_position = 1,
+        file_type = "txt",
+        delimiter = "_!_"
+    ),
+    "lcqmc": ClassificationProcessor(
+        labels = ["0", "1"],
+        label_position = 2,
+        text_a_position = 0,
+        text_b_position = 1,
+        file_type = "txt",
+        delimiter = "_!_"
+    ),
+    "inews": ClassificationProcessor(
+        labels = ["0", "1", "2"],
+        label_position = 0,
+        text_a_position = 2,
+        text_b_position = 3,
+        file_type = "txt",
+        delimiter = "_!_"
+    ),
+    "iflytek": ClassificationProcessor(
+        labels = [str(i) for i in range(119)],
+        label_position = 0,
+        text_a_position = 1,
+        text_b_position = None,
+        file_type = "txt",
+        delimiter = "_!_"
+    ),
+    "thucnews": ClassificationProcessor(
+        labels = [str(i) for i in range(14)],
+        label_position = 0,
+        text_a_position = 3,
+        text_b_position = None,
+        file_type = "txt",
+        delimiter = "_!_",
+        min_seq_length = 3
+    ),
+    "tnews": ClassificationProcessor(
+        labels = [str(100 + i) for i in range(17) if i != 5 and i != 11],
+        label_position = 1,
+        text_a_position = 3,
+        text_b_position = None,
+        file_type = "txt",
+        delimiter = "_!_"
+    )
+}
+
+
+PRETRAINED_LM_DIR = "../pretrained_lm"
+PRETRAINED_LM_URLS = {
+    "bert": "https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip",
+    "bert_wwm_ext": "https://storage.googleapis.com/chineseglue/pretrain_models/chinese_wwm_ext_L-12_H-768_A-12.zip",
+    "albert_xlarge": "https://storage.googleapis.com/albert_zh/albert_xlarge_zh_177k.zip",
+    "roberta": "https://storage.googleapis.com/chineseglue/pretrain_models/roeberta_zh_L-24_H-1024_A-16.zip",
+    "roberta_wwm_ext": "https://storage.googleapis.com/chineseglue/pretrain_models/chinese_roberta_wwm_ext_L-12_H-768_A-12.zip",
+    "roberta_wwm_ext_large": "https://storage.googleapis.com/chineseglue/pretrain_models/chinese_roberta_wwm_large_ext_L-24_H-1024_A-16.zip"
+}
+PRETRAINED_LM_DICT = {
+    "bert": "chinese_L-12_H-768_A-12",
+    "bert_wwm_ext": "chinese_wwm_ext_L-12_H-768_A-12",
+    "albert_xlarge": "albert_xlarge_zh_177k",
+    "roberta": "roeberta_zh_L-24_H-1024_A-16",
+    "roberta_wwm_ext": "chinese_roberta_wwm_ext_L-12_H-768_A-12",
+    "roberta_wwm_ext_large": "chinese_roberta_wwm_large_ext_L-24_H-1024_A-16"
+}
+
+
+def classification_tasks(configs, processor):
+    ##########################################################################################################
+    # download and unzip dataset and pretrained language model
+    ##########################################################################################################
+    if configs.task_name not in DATA_URLS:
+        raise ValueError(
+            "Not support task: %s" % configs.task_name)
+    if configs.pretrained_lm_name not in PRETRAINED_LM_URLS:
+        raise ValueError(
+            "Not support pretrained language model: %s" % configs.pretrained_lm_name)
+    data_dir = os.path.join(DATA_DIR, configs.task_name)
+    pretrained_lm_dir = os.path.join(PRETRAINED_LM_DIR, configs.pretrained_lm_name)
+    if not os.path.exists(data_dir):
+        mkdir(data_dir)
+        data_zip = wget(
+            url=DATA_URLS.get(configs.task_name), 
+            save_path=data_dir, 
+            rename=configs.task_name+".zip")
+        data_path = unzip(file_path=data_zip)
+        rm(data_zip)
+    else:
+        print("[exists] data already exists: %s" 
+              % os.path.abspath(data_dir))
+    if not os.path.exists(pretrained_lm_dir):
+        mkdir(pretrained_lm_dir)
+        pretrained_lm_zip = wget(
+            url=PRETRAINED_LM_URLS.get(configs.pretrained_lm_name), 
+            save_path=pretrained_lm_dir, 
+            rename=configs.pretrained_lm_name+".zip")
+        unzip(file_path=pretrained_lm_zip)
+        rm(pretrained_lm_zip)
+    else:
+        print("[exists] pretrained language model already exists: %s" 
+              % os.path.abspath(pretrained_lm_dir))
+    ##########################################################################################################
+    # run classifier
+    ##########################################################################################################
+    run_classifier(processor, configs)
