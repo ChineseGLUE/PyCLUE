@@ -2,17 +2,18 @@ from ..classifier_utils.core import ClassificationProcessor
 
 
 DATA_URLS = {
-    "bq": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/bq.zip",
-    "xnli": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/xnli.zip",
-    "lcqmc": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/lcqmc.zip",
-    "inews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/inews.zip",
-    "iflytek": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/iflytek.zip",
-    "thucnews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/thucnews.zip",
-    "tnews": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/tnews.zip",
-    "jdcomment": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/jdcomment.zip",
-    "mrpc": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/mrpc.zip",
-    "cola": "https://github.com/liushaoweihua/chineseGLUE_datasets/raw/master/classification/cola.zip"
+    "bq": "https://storage.googleapis.com/chineseglue/toolkitTasks/bq.zip",
+    "xnli": "https://storage.googleapis.com/chineseglue/toolkitTasks/xnli.zip",
+    "lcqmc": "https://storage.googleapis.com/chineseglue/toolkitTasks/lcqmc.zip",
+    "inews": "https://storage.googleapis.com/chineseglue/toolkitTasks/inews.zip",
+    "iflytek": "https://storage.googleapis.com/chineseglue/toolkitTasks/iflytek.zip",
+    "thucnews": "https://storage.googleapis.com/chineseglue/toolkitTasks/thucnews.zip",
+    "tnews": "https://storage.googleapis.com/chineseglue/toolkitTasks/tnews.zip",
+    "jdcomment": "",
+    "mrpc": "",
+    "cola": ""
 }
+
 
 DATA_PROCESSORS = {
     "bq": ClassificationProcessor(

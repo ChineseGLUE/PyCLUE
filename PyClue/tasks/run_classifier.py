@@ -42,10 +42,9 @@ def clue_tasks(configs):
     pretrained_lm_dir = os.path.join(PRETRAINED_LM_DIR, configs.pretrained_lm_name)
 
     if not os.path.exists(data_dir):
-        mkdir(data_dir)
         data_zip = wget(
             url=DATA_URLS.get(configs.task_name), 
-            save_path=data_dir, 
+            save_path=DATA_DIR, 
             rename=configs.task_name+".zip")
         unzip(file_path=data_zip)
         print("[saved]  data saved at: %s"
@@ -63,7 +62,7 @@ def clue_tasks(configs):
             rename=configs.pretrained_lm_name+".zip")
         unzip(file_path=pretrained_lm_zip)
         print("[saved]  pretrained language model saved at: %s"
-              % os.path.exists(os.path.join(pretrained_lm_dir, PRETRAINED_LM_DICT.get(configs.pretrained_lm_name))))
+              % os.path.join(pretrained_lm_dir, PRETRAINED_LM_DICT.get(configs.pretrained_lm_name)))
         rm(pretrained_lm_zip)
     else:
         print("[exists] pretrained language model already exists: %s" 
