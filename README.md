@@ -4,6 +4,14 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
 
 中文语言理解测评基准的Python工具包，快速测评代表性数据集、基准（预训练）模型，并针对自己的数据选择合适的基准（预训练）模型进行快速应用。
 
+## 安装PyCLUE
+
+现在，可以通过pip安装PyCLUE:
+
+```bash
+pip install PyCLUE 
+```
+
 ## 基准（预训练）模型
 
 **现已支持以下模型：**

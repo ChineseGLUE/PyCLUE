@@ -1,4 +1,3 @@
-tensorflow-gpu <= 1.15
-# tensorflow <= 1.15
+tensorflow <= 1.15
 requests == 2.21.0
 numpy == 1.16.4
