@@ -1,17 +1,19 @@
 import os
 import sys
 sys.path.append("../..")
-from PyClue.tasks.run_classifier import clue_tasks, configs
+from PyCLUE.tasks.run_classifier import clue_tasks, configs
 
 # assign GPU devices or CPU devices
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# default configs: see pyclue.utils.classifier_utils.core
+# default configs: see PyCLUE.utils.classifier_utils.core
 # below are some necessary paramters required in running this task
 
 # task_name:
-#     Support: bq, xnli, lcqmc, inews, iflytek, thucnews, tnews
-configs["task_name"] = "bq"
+#     Support: 
+#         chineseGLUE: bq, xnli, lcqmc, inews, thucnews, 
+#         CLUE: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
+configs["task_name"] = "afqmc"
 
 # pretrained_lm_name: 
 #     If None, should assign `vocab_file`, `bert_config_file`, `init_checkpoint`.

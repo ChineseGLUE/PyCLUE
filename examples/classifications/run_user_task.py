@@ -1,10 +1,10 @@
 import os
-from PyClue.tasks.run_classifier import user_tasks, configs
+from PyCLUE.tasks.run_classifier import user_tasks, configs
 
 # assign GPU devices or CPU devices
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# default configs: see pyclue.utils.classifier_utils.core
+# default configs: see PyCLUE.utils.classifier_utils.core
 # below are some necessary paramters required in running this task
 
 # task_name: default is "user_defined_task"
