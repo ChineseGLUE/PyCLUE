@@ -14,16 +14,21 @@ pip install PyCLUE
 
 ### 快速测评Clue数据集
 
-测评文件存放在`PyCLUE/examples/classifications`中，分别为`run_clue_task.py`（GPU/CPU版本）和`run_clue_task_tpu.py`（TPU版本）。
+cd PyCLUE/examples/classifications
 
-在`run_clue_task.py`中，需要调整的参数为：
+python3 run_clue_task.py
+
+`run_clue_task.py`（GPU/CPU版本）和`run_clue_task_tpu.py`（TPU版本）。
+
+在`run_clue_task.py`中，可以调整的参数为：
 
 ```python
 # 测评任务名 task_name:
 #     支持: 
+#         CLUE benchmark: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
 #         chineseGLUE: bq, xnli, lcqmc, inews, thucnews, 
-#         CLUE: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
-configs["task_name"] = "bq"
+
+configs["task_name"] = "tnews"
 
 # 基准（预训练）模型名 pretrained_lm_name: 
 #     如果该参数为None，需要指定`vocab_file`, `bert_config_file`和`init_checkpoint`三参数。
