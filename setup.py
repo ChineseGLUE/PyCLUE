@@ -15,7 +15,7 @@ class Installation(install):
 
 setuptools.setup(
     name="PyCLUE",
-    version="2019.12.04",
+    version="2019.12.05",
     author="Liu Shaoweihua",
     author_email="liushaoweihua@126.com",
     maintainer="CLUE",

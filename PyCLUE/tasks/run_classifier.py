@@ -84,7 +84,8 @@ def clue_tasks(configs):
     ##########################################################################################################
     if not os.path.exists(configs.output_dir):
         os.makedirs(configs.output_dir)
-    run_classifier(processor, configs)
+    result_res = run_classifier(processor, configs)
+    return result_res
     
     
 def user_tasks(configs):
@@ -93,9 +94,9 @@ def user_tasks(configs):
     ##########################################################################################################
     configs = UserConfigs(configs)
     processor = ClassificationProcessor(configs.labels,
-                                        configs.label_position,
-                                        configs.text_a_position,
-                                        configs.text_b_position,
+                                        configs.label_column,
+                                        configs.text_a_column,
+                                        configs.text_b_column,
                                         configs.ignore_header,
                                         configs.min_seq_length,
                                         configs.file_type,
@@ -128,4 +129,5 @@ def user_tasks(configs):
             configs.pretrained_lm_name = "bert"
     if not os.path.exists(configs.output_dir):
         os.makedirs(configs.output_dir)
-    run_classifier(processor, configs)
+    result_res = run_classifier(processor, configs)
+    return result_res

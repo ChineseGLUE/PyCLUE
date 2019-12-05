@@ -26,6 +26,7 @@ from __future__ import print_function
 import os
 import json
 import collections
+import numpy as np
 import tensorflow as tf
 from . import tokenization, modeling
 from . import optimization_finetuning as optimization
@@ -71,7 +72,8 @@ default_configs = {
     "tpu_zone": None,
     "gcp_project": None,
     "master": None,
-    "num_tpu_cores": 8
+    "num_tpu_cores": 8,
+    "verbose": 0
 }
 
 
@@ -104,6 +106,7 @@ class TaskConfigs(object):
         self.gcp_project = configs.get("gcp_project")
         self.master = configs.get("master")
         self.num_tpu_cores = configs.get("num_tpu_cores")
+        self.verbose = configs.get("verbose")
         
 
 class UserConfigs(TaskConfigs):
@@ -624,7 +627,10 @@ def model_fn_builder(model_type, bert_config, num_labels, init_checkpoint, learn
 
 
 def run_classifier(processor, configs):
-    tf.logging.set_verbosity(tf.logging.INFO)
+    if configs.verbose == 0:
+        tf.logging.set_verbosity(tf.logging.ERROR)
+    else:
+        tf.logging.set_verbosity(tf.logging.INFO)
     
     tokenization.validate_case_matches_checkpoint(configs.do_lower_case, configs.init_checkpoint)
     
@@ -656,7 +662,7 @@ def run_classifier(processor, configs):
 
     is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
     # Cloud TPU: Invalid TPU configuration, ensure ClusterResolver is passed to tpu.
-    print("###tpu_cluster_resolver:", tpu_cluster_resolver)
+    print("[tpu]    tpu cluster resolver:", tpu_cluster_resolver)
     run_config = tf.contrib.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=configs.master,
@@ -672,7 +678,7 @@ def run_classifier(processor, configs):
     num_warmup_steps = None
     if configs.do_train:
         train_examples = processor.get_train_examples(configs.data_dir)
-        print("###length of total train_examples:", len(train_examples))
+        print("[train]  length of total train_examples:", len(train_examples))
         num_train_steps = int(len(train_examples) / configs.train_batch_size * configs.num_train_epochs)
         num_warmup_steps = int(num_train_steps * configs.warmup_proportion)
 
@@ -700,7 +706,8 @@ def run_classifier(processor, configs):
     if configs.do_train:
         train_file = os.path.join(configs.output_dir, "train.tf_record")
         train_file_exists = os.path.exists(train_file)
-        print("###train_file_exists:", train_file_exists, " ;train_file:", train_file)
+        print("[train]  train file exists:", train_file_exists)
+        print("[train]  train file path:", train_file)
         if not train_file_exists:  # if tf_record file not exist, convert from raw text file. # TODO
             file_based_convert_examples_to_features(
                 train_examples, label_list, configs.max_seq_length, tokenizer, train_file)
@@ -717,25 +724,25 @@ def run_classifier(processor, configs):
 
     if configs.do_eval:
         # dev dataset
-        eval_examples = processor.get_dev_examples(configs.data_dir)
-        num_actual_eval_examples = len(eval_examples)
+        dev_examples = processor.get_dev_examples(configs.data_dir)
+        num_actual_dev_examples = len(dev_examples)
         if configs.use_tpu:
             # TPU requires a fixed batch size for all batches, therefore the number
             # of examples must be a multiple of the batch size, or else examples
             # will get dropped. So we pad with fake examples which are ignored
             # later on. These do NOT count towards the metric (all tf.metrics
             # support a per-instance weight, and these get a weight of 0.0).
-            while len(eval_examples) % configs.eval_batch_size != 0:
-                eval_examples.append(PaddingInputExample())
+            while len(dev_examples) % configs.eval_batch_size != 0:
+                dev_examples.append(PaddingInputExample())
     
         eval_file = os.path.join(configs.output_dir, "dev.tf_record")
         file_based_convert_examples_to_features(
-            eval_examples, label_list, configs.max_seq_length, tokenizer, eval_file)
+            dev_examples, label_list, configs.max_seq_length, tokenizer, eval_file)
     
         tf.logging.info("***** Running evaluation *****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",
-                     len(eval_examples), num_actual_eval_examples,
-                     len(eval_examples) - num_actual_eval_examples)
+                     len(dev_examples), num_actual_dev_examples,
+                     len(dev_examples) - num_actual_dev_examples)
         tf.logging.info("  Batch size = %d", configs.eval_batch_size)
     
         # This tells the estimator to run through the entire set.
@@ -743,8 +750,8 @@ def run_classifier(processor, configs):
         # However, if running eval on the TPU, you will need to specify the
         # number of steps.
         if configs.use_tpu:
-            assert len(eval_examples) % configs.eval_batch_size == 0
-            eval_steps = int(len(eval_examples) // configs.eval_batch_size)
+            assert len(dev_examples) % configs.eval_batch_size == 0
+            eval_steps = int(len(dev_examples) // configs.eval_batch_size)
     
         eval_drop_remainder = True if configs.use_tpu else False
         eval_input_fn = file_based_input_fn_builder(
@@ -767,8 +774,8 @@ def run_classifier(processor, configs):
         steps_and_files = sorted(steps_and_files, key=lambda x: x[0])
     
         output_eval_file = os.path.join(configs.output_dir, "dev_results.txt")
-        print("output_eval_file:", output_eval_file)
-        tf.logging.info("output_eval_file:" + output_eval_file)
+        print("[eval]   dev result saved at:", output_eval_file)
+        tf.logging.info("dev_eval_file:" + output_eval_file)
         with tf.gfile.GFile(output_eval_file, "w") as writer:
             for global_step, filename in sorted(steps_and_files, key=lambda x: x[0]):
                 result = estimator.evaluate(input_fn=eval_input_fn,
@@ -791,25 +798,25 @@ def run_classifier(processor, configs):
         #    writer.write("%s = %s\n" % (key, str(result[key])))
     
         # test dataset
-        eval_examples = processor.get_test_examples(configs.data_dir)
-        num_actual_eval_examples = len(eval_examples)
+        test_examples = processor.get_test_examples(configs.data_dir)
+        num_actual_test_examples = len(test_examples)
         if configs.use_tpu:
             # TPU requires a fixed batch size for all batches, therefore the number
             # of examples must be a multiple of the batch size, or else examples
             # will get dropped. So we pad with fake examples which are ignored
             # later on. These do NOT count towards the metric (all tf.metrics
             # support a per-instance weight, and these get a weight of 0.0).
-            while len(eval_examples) % configs.eval_batch_size != 0:
-                eval_examples.append(PaddingInputExample())
+            while len(test_examples) % configs.eval_batch_size != 0:
+                test_examples.append(PaddingInputExample())
     
         eval_file = os.path.join(configs.output_dir, "test.tf_record")
         file_based_convert_examples_to_features(
-            eval_examples, label_list, configs.max_seq_length, tokenizer, eval_file)
+            test_examples, label_list, configs.max_seq_length, tokenizer, eval_file)
     
         tf.logging.info("***** Running evaluation *****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",
-                     len(eval_examples), num_actual_eval_examples,
-                     len(eval_examples) - num_actual_eval_examples)
+                     len(test_examples), num_actual_test_examples,
+                     len(test_examples) - num_actual_test_examples)
         tf.logging.info("  Batch size = %d", configs.eval_batch_size)
     
         # This tells the estimator to run through the entire set.
@@ -817,8 +824,8 @@ def run_classifier(processor, configs):
         # However, if running eval on the TPU, you will need to specify the
         # number of steps.
         if configs.use_tpu:
-            assert len(eval_examples) % configs.eval_batch_size == 0
-            eval_steps = int(len(eval_examples) // configs.eval_batch_size)
+            assert len(test_examples) % configs.eval_batch_size == 0
+            eval_steps = int(len(test_examples) // configs.eval_batch_size)
     
         eval_drop_remainder = True if configs.use_tpu else False
         eval_input_fn = file_based_input_fn_builder(
@@ -841,8 +848,8 @@ def run_classifier(processor, configs):
         steps_and_files = sorted(steps_and_files, key=lambda x: x[0])
     
         output_eval_file = os.path.join(configs.output_dir, "test_results.txt")
-        print("output_eval_file:", output_eval_file)
-        tf.logging.info("output_eval_file:" + output_eval_file)
+        print("[test]   test result saved at:", output_eval_file)
+        tf.logging.info("test_eval_file:" + output_eval_file)
         with tf.gfile.GFile(output_eval_file, "w") as writer:
             for global_step, filename in sorted(steps_and_files, key=lambda x: x[0]):
                 result = estimator.evaluate(input_fn=eval_input_fn,
@@ -895,16 +902,45 @@ def run_classifier(processor, configs):
         result = estimator.predict(input_fn=predict_input_fn)
     
         output_predict_file = os.path.join(configs.output_dir, "test_results.tsv")
+        print("[pred]   predict result saved at:", output_predict_file)
         with tf.gfile.GFile(output_predict_file, "w") as writer:
             num_written_lines = 0
             tf.logging.info("***** Predict results *****")
+            pred_labels = []
             for (i, prediction) in enumerate(result):
                 probabilities = prediction["probabilities"]
                 if i >= num_actual_predict_examples:
                     break
-                output_line = "\t".join(
-                    str(class_probability)
-                    for class_probability in probabilities) + "\n"
-                writer.write(output_line)
+                pred_label = np.argmax([item for item in probabilities])
+                pred_labels.append(pred_label)
+            output_lines = []
+            for pred_data, pred_label in zip(test_examples, pred_labels):
+                output_lines.append({"guid": pred_data.guid, "text_a": pred_data.text_a, "text_b": pred_data.text_b, "label": processor.labels[pred_label]})
+            for item in output_lines:
+                writer.write(json.dumps(item, ensure_ascii=False)+"\n")
                 num_written_lines += 1
         assert num_written_lines == num_actual_predict_examples
+        
+    dev_res, test_res = "", ""
+    test_outputs = []
+    
+    dev_res_file = os.path.join(configs.output_dir, "dev_results.txt")
+    test_res_file = os.path.join(configs.output_dir, "test_results.txt")
+    test_output_file = os.path.join(configs.output_dir, "test_results.tsv")
+    
+    if configs.do_eval:
+        with open(dev_res_file, "r") as f:
+            dev_res = [item.strip().split(" = ") for item in f.readlines()[-4:]]
+        with open(test_res_file, "r") as f:
+            test_res = [item.strip().split(" = ") for item in f.readlines()[-4:]]
+    
+    if configs.do_predict:
+        test_outputs = output_lines
+        
+    result_dict = {
+        "dev_res": {item[0]:item[1] for item in dev_res},
+        "test_res": {item[0]:item[1] for item in test_res},
+        "test_outputs": test_outputs
+    }
+    
+    return result_dict

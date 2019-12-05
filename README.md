@@ -12,170 +12,247 @@ Python toolkit for Chinese Language Understanding Evaluation benchmark.
 pip install PyCLUE 
 ```
 
-### 快速测评Clue数据集
+## 使用PyCLUE
 
-```bash
-cd PyCLUE/examples/classifications
-python3 run_clue_task.py
-```
+### 分类/句子对 任务
 
-`run_clue_task.py`（GPU/CPU版本）和`run_clue_task_tpu.py`（TPU版本）。
+#### 快速测评CLUE数据集
 
-在`run_clue_task.py`中，可以调整的参数为：
+以下以在CPU/GPU上运行为例，完整例子可参见`PyCLUE/examples/classifications/run_clue_task.py`。在TPU上运行的例子参照`PyCLUE/examples/classifications/run_clue_task_tpu.py`。
 
 ```python
-# 测评任务名 task_name:
-#     支持: 
-#         CLUE benchmark: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
-#         chineseGLUE: bq, xnli, lcqmc, inews, thucnews, 
+# 指定使用的GPU，如无GPU则不指定
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-configs["task_name"] = "tnews"
-
-# 基准（预训练）模型名 pretrained_lm_name: 
-#     如果该参数为None，需要指定`vocab_file`, `bert_config_file`和`init_checkpoint`三参数。
-#     或者可以直接指定以下基准（预训练）模型：
-#         bert, bert_wwm_ext, albert_xlarge, albert_large, albert_base, albert_base_ext, 
-#         albert_small, albert_tiny, roberta, roberta_wwm_ext, roberta_wwm_ext_large
-configs["pretrained_lm_name"] = "bert"
-
-# 执行内容
-configs["do_train"] = True
-configs["do_eval"] = True
-configs["do_predict"] = True
-
-# 训练参数调整
-configs["max_seq_length"] = 128
-configs["train_batch_size"] = 32
-configs["learning_rate"] = 2e-5
-configs["warmup_proportion"] = 0.1
-configs["num_train_epochs"] = 3.0
+# 导入分类/句子对测评任务相关组件
+from PyCLUE.tasks.run_classifier import clue_tasks, configs
 ```
 
-在`run_clue_task_tpu.py`中，使用tpu进行模型仅需增加以下内容：
+其中，`clue_tasks`函数接受测评任务的`dict`类型参数，`configs`为测评任务的`dict`类型参数，默认值和说明如下：
 
-```python
-# tpu内容配置
-configs["use_tpu"] = True
-configs["tpu_name"] = "grpc://10.1.101.2:8470"
-configs["num_tpu_cores"] = 8
-```
-
-关于`configs`的详细参数，参照`PyCLUE/PyCLUE/utils/classifier_utils/core.py`的`default_configs`：
-
-```python
-default_configs = {
-    "task_name": None,
-    "pretrained_lm_name": None,
-    "do_train": False,
-    "do_eval": False,
-    "do_predict": False, 
-    "data_dir": None,
-    "output_dir": None,
-    "vocab_file": None,
-    "bert_config_file": None,
-    "init_checkpoint": None,
-    "do_lower_case": True,
+```json
+{
+    # 测评任务名
+    #     CLUE benchmark: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
+    #     chineseGLUE: bq, xnli, lcqmc, inews, thucnews
+    "task_name": "afqmc",
+    # 预训练语言模型
+    #     如果该参数为None，需要指定vocab_file, bert_config_file和init_checkpoint三参数。
+    #     或者可以直接指定以下基准（预训练）模型：
+    #         bert, bert_wwm_ext, albert_xlarge, albert_large, albert_base, albert_base_ext,
+    #         albert_small, albert_tiny, roberta, roberta_wwm_ext, roberta_wwm_ext_large
+    "pretrained_lm_name": "bert",
+    # 执行内容
+    "do_train": true,
+    "do_eval": true,
+    "do_predict": true,
+    # 数据路径
+    #     如不指定，则默认为：PyCLUE/datasets
+    #     路径中的文件后缀名可接受 "txt", "tsv", "json"等
+    #     如果 do_train = True，数据目录中应至少包含train文件，前缀名为"train"
+    #     如果 do_eval = True，数据目录中应至少包含dev文件，前缀名为"dev"
+    #     如果 do_predict = True，数据目录中应至少包含test文件，前缀名为"test"
+    "data_dir": null,
+    # 输出结果保存路径
+    #     如不指定，则默认为：PyCLUE/task_outputs
+    #     包含训练的模型文件，tf_record数据以及输出的验证结果dev_results.txt/test_results.txt/test_results.tsv
+    "output_dir": null,
+    # 自行指定预训练语言模型三参数
+    "vocab_file": null,
+    "bert_config_file": null,
+    "init_checkpoint": null,
+    # 训练参数
+    "do_lower_case": true,
     "max_seq_length": 128,
-    "train_batch_size": 32,
+    "train_batch_size": 8,
     "eval_batch_size": 8,
     "predict_batch_size": 8,
-    "learning_rate": 5e-5,
-    "num_train_epochs": 3.0,
+    "learning_rate": 2e-05,
+    "num_train_epochs": 1,
     "warmup_proportion": 0.1,
     "save_checkpoints_steps": 1000,
     "iterations_per_loop": 1000,
-    "use_tpu": False,
-    "tpu_name": None,
-    "tpu_zone": None,
-    "gcp_project": None,
-    "master": None,
-    "num_tpu_cores": 8
+    # TPU选项
+    "use_tpu": false,
+    "tpu_name": null,
+    "tpu_zone": null,
+    "gcp_project": null,
+    "master": null,
+    "num_tpu_cores": 8,
+    # 是否输出训练过程
+    "verbose": 0
 }
 ```
 
-### 应用于自定义数据集
-
-执行文件存放在`PyCLUE/examples/classifications`中，分别为`run_user_task.py`（GPU/CPU版本）和`run_user_task_tpu.py`（TPU版本）。
-
-在`run_user_task.py`中，需要调整的参数为：
+执行以下评测过程：
 
 ```python
-# 自定义任务名 task_name: 如果为None时，默认任务名为"user_defined_task"
-configs["task_name"] = "" 
+# task_name
+configs["task_name"] = "wsc"
 
-# 基准（预训练）模型名 pretrained_lm_name: 
-#     如果该参数为None，需要指定`vocab_file`, `bert_config_file`和`init_checkpoint`三参数。
-#     或者可以直接指定以下基准（预训练）模型：
-#         bert, bert_wwm_ext, albert_xlarge, albert_large, albert_base, albert_base_ext, 
-#         albert_small, albert_tiny, roberta, roberta_wwm_ext, roberta_wwm_ext_large
-configs["pretrained_lm_name"] = None
+# pretrained_lm_name
+configs["pretrained_lm_name"] = "bert"
 
-# 执行内容
+# actions
 configs["do_train"] = True
 configs["do_eval"] = True
 configs["do_predict"] = True
 
-# 数据目录 data_dir:
-#     如果 `do_train` = True，数据目录中应至少包含train文件
-#     如果 `do_eval` = True，数据目录中应至少包含dev文件
-#     如果 `do_predict` = True，数据目录中应至少包含test文件
-configs["data_dir"] = ""
+# train parameters
+configs["max_seq_length"] = 128
+configs["train_batch_size"] = 8
+configs["learning_rate"] = 2e-5
+configs["warmup_proportion"] = 0.1
+configs["num_train_epochs"] = 50
 
-# 数据配置项 data configs:
-#     以下是一些案例说明
+# show training process
+configs["verbose"] = 0
+
+wsc_result = clue_tasks(configs)
+print(wsc_result)
+```
+
+测评结果由`clue_tasks`返回，形式如下：
+
+```json
+{
+    # 验证集指标结果
+    "dev_res":{
+        "eval_accuracy": "",
+        "eval_loss": "",
+        "global_step": "",
+        "loss": ""
+    },
+    # 测试集指标结果（部分测试集有label，具有参考意义；部分则没有label，无参考意义）
+    "test_res":{
+        "eval_accuracy": "",
+        "eval_loss": "",
+        "global_step": "",
+        "loss": ""
+    },
+    # 测试集预测结果
+    "test_outputs": [
+        {
+            "guid": "test-0",
+            "text_a": "",
+            "text_b": "",
+            "label": ""
+        },
+        ...
+    ]
+}
+```
+
+测评结果同时保存在`configs`中指定的输出目录`${output_dir}/classifications/${task_name}/${pretrained_lm_name}`中，如本例的`PyCLUE/task_outputs/classifications/wsc/bert`中。其中`dev_results.txt`保存了验证集的指标结果，`test_results.txt`保存了测试集的指标结果（部分测试集有label，具有参考意义；部分则没有label，无参考意义）。`test_results.tsv`则保存了测试集的预测结果，具体形式如下：
+
+```json
+{"guid": "test-0", "text_a": "_毛德和朵拉_看到火车冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
+{"guid": "test-1", "text_a": "毛德和朵拉看到_火车_冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
+{"guid": "test-2", "text_a": "毛德和朵拉看到火车冲过大草原，引擎上冒着滚滚_黑烟_。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
+{"guid": "test-3", "text_a": "毛德和朵拉看到火车冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的_轰鸣声_和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
+{"guid": "test-4", "text_a": "毛德和朵拉看到火车冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的_汽笛声_。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
+{"guid": "test-5", "text_a": "毛德和朵拉看到火车冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，_马_都跑开了。", "text_b": null, "label": "false"}
+```
+
+#### 应用于自定义数据集
+
+以下以在CPU/GPU上运行为例，完整例子可参见`PyCLUE/examples/classifications/run_user_task.py`。在TPU上运行的例子参照`PyCLUE/examples/classifications/run_user_task_tpu.py`。
+
+```python
+# 指定使用的GPU，如无GPU则不指定
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+# 导入分类/句子对测评任务相关组件
+from PyCLUE.tasks.run_classifier import user_tasks, configs
+
+# task_name: default is "user_defined_task"
+configs["task_name"] = "" 
+
+# pretrained_lm_name
+configs["pretrained_lm_name"] = "bert"
+
+# actions
+configs["do_train"] = True
+configs["do_eval"] = True
+configs["do_predict"] = True
+
+# data_dir
+configs["data_dir"] = "my_file_path"
+
+# data configs
 configs["labels"] = ["0", "1"]
-# label_position, text_a_position , text_b_position & delimiter:
-#     examples_1:
+# label_, text_a_column , text_b_column & delimiter:
+#     examples_1，txt文件，分隔符为_!_，句子对任务：
 #         0_!_我想要回家_!_我准备回家
 #         1_!_我想要回家_!_我准备吃饭
-#     >> label_position = 0, text_a_position = 1, text_b_position = 2, delimiter = "_!_"
-#     examples_2:
-#         0_!_我很生气
-#         1_!_我很开心
-#     >> label_position = 0, text_a_position = 1, text_b_position = None, delimiter = "_!_"
-configs["label_position"] = 0
-configs["text_a_position"] = 1
-configs["text_b_position"] = 2
-# 分隔符
-configs["delimiter"] = "_!_"
-# 是否丢弃首行 ignore_header:
-#     是否丢弃每个文件的首行，影响文件：train, dev, test
-configs["ignore_header"] = True
-# 最小句长 min_seq_length:
-#     是否丢弃句长小于`min_seq_length`的句子
+#     >> label_column = 0, text_a_column = 1, text_b_column = 2, delimiter = "_!_"
+#     examples_2，tsv文件，分隔符为\t，分类任务：
+#         0\t我很生气
+#         1\t我很开心
+#     >> label_column = 0, text_a_column = 1, text_b_column = None, delimiter = "\t"
+#     examples_3，json文件，句子对任务：
+#         {"label": 0, "sentence1": "我想要回家", "sentence2": "我很生气"}
+#     >> label_column = "label", text_a_column = "sentence1", text_b_column = "sentence2", delimiter = None
+configs["label_column"] = ""
+configs["text_a_column"] = ""
+configs["text_b_column"] = ""
+configs["delimiter"] = ""
+# ignore_header
+#     是否丢弃第一行（往往是第一行为各列说明的时候设置为True）
+configs["ignore_header"] = False
+# min_seq_length
+#     删除最小句长小于min_seq_length的训练数据
 configs["min_seq_length"] = 3
-# 文件类型 file_type:
-#     train, dev, test的文件类型，可以为"txt"或者"tsv"
-configs["file_type"] = "txt"
+# file_type
+#     数据文件后缀名，可以为 "txt", "tsv", "json"
+configs["file_type"] = ""
 
-# 输出路径 output_dir: 
-#     保存训练后的模型，验证结果和tf_records类型的数据
+# output_dir
 configs["output_dir"] = ""
 
-# 基准（预训练）模型组件
-#     如果`pretrained_lm_name`不为None，以下组件会自动下载
+# 预训练语言模型组件
+#     如果 pretrained_lm_name 不为 None, 以下部分不需要指定。
 configs["vocab_file"] = "vocab.txt"
 configs["bert_config_file"] = "XXX_config.json"
 configs["init_checkpoint"] = "XXX_model.ckpt"
 
-# 训练参数
+# train parameters
 configs["max_seq_length"] = 128
-configs["train_batch_size"] = 32
+configs["train_batch_size"] = 8
 configs["learning_rate"] = 2e-5
 configs["warmup_proportion"] = 0.1
-configs["num_train_epochs"] = 3.0
+configs["num_train_epochs"] = 50
+
+# show training process
+configs["verbose"] = 0
+
+my_result = user_tasks(configs)
+print(my_result)
 ```
 
-在`run_user_task_tpu.py`中，使用tpu进行模型仅需增加以下内容：
+结果的输出和保存形式与测评CLUE数据集时一致。
 
-```python
-# tpu内容配置
-configs["use_tpu"] = True
-configs["tpu_name"] = "grpc://10.1.101.2:8470"
-configs["num_tpu_cores"] = 8
-```
+### 阅读理解任务
 
-关于自定义数据集的`configs`参数，在`PyCLUE/PyCLUE/utils/classifier_utils/core.py`的`default_configs`的基础上新增数据项参数，用例参照上文。
+#### 快速测评CLUE数据集
+
+即将加入。
+
+#### 应用于自定义数据集
+
+即将j加入。
+
+### 命名实体识别任务
+
+#### 快速测评CLUE数据集
+
+即将加入。
+
+#### 应用于自定义数据集
+
+即将j加入。
 
 ## 基准（预训练）模型
 
