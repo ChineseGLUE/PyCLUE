@@ -31,7 +31,7 @@ from PyCLUE.tasks.run_classifier import clue_tasks, configs
 
 其中，`clue_tasks`函数接受测评任务的`dict`类型参数，`configs`为测评任务的`dict`类型参数，默认值和说明如下：
 
-```json
+```python
 {
     # 测评任务名
     #     CLUE benchmark: afqmc, cmnli, copa, csl, iflytek, tnews, wsc
@@ -115,7 +115,7 @@ print(wsc_result)
 
 测评结果由`clue_tasks`返回，形式如下：
 
-```json
+```python
 {
     # 验证集指标结果
     "dev_res":{
@@ -146,7 +146,7 @@ print(wsc_result)
 
 测评结果同时保存在`configs`中指定的输出目录`${output_dir}/classifications/${task_name}/${pretrained_lm_name}`中，如本例的`PyCLUE/task_outputs/classifications/wsc/bert`中。其中`dev_results.txt`保存了验证集的指标结果，`test_results.txt`保存了测试集的指标结果（部分测试集有label，具有参考意义；部分则没有label，无参考意义）。`test_results.tsv`则保存了测试集的预测结果，具体形式如下：
 
-```json
+```python
 {"guid": "test-0", "text_a": "_毛德和朵拉_看到火车冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
 {"guid": "test-1", "text_a": "毛德和朵拉看到_火车_冲过大草原，引擎上冒着滚滚黑烟。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
 {"guid": "test-2", "text_a": "毛德和朵拉看到火车冲过大草原，引擎上冒着滚滚_黑烟_。从远处就能听见它们的轰鸣声和狂野而清晰的汽笛声。当[它们]行进到近处时，马都跑开了。", "text_b": null, "label": "false"}
