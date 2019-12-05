@@ -15,7 +15,7 @@ pip install PyCLUE
 ### 快速测评Clue数据集
 
 ```bash
-cd PyCLUE/examples/classifications`
+cd PyCLUE/examples/classifications
 python3 run_clue_task.py
 ```
 
